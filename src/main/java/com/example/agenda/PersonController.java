@@ -5,10 +5,15 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import com.example.agenda.MainApp;
 import com.example.agenda.Person;
 
 public class PersonController {
+
+    @PersistenceContext
+    private EntityManager entityManager;
     @FXML
     private TableView<Person> personTable;
     @FXML
@@ -85,7 +90,11 @@ public class PersonController {
     private void handleDeletePerson() {
         int selectedIndex = personTable.getSelectionModel().getSelectedIndex();
         if (selectedIndex >= 0) {
-            personTable.getItems().remove(selectedIndex);
+            Person selectedPerson = personTable.getSelectionModel().getSelectedItem();
+
+            entityManager.remove(selectedPerson);
+
+            mainApp.getPersonData().remove(selectedPerson);
         } else {
             // Nothing selected.
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -105,6 +114,9 @@ public class PersonController {
         if (okClicked) {
             mainApp.getPersonData().add(tempPerson);
         }
+
+        entityManager.persist(tempPerson);
+        mainApp.getPersonData().add(tempPerson);
     }
 
     /**
@@ -118,6 +130,8 @@ public class PersonController {
             boolean okClicked = mainApp.showPersonE(selectedPerson);
             if (okClicked) {
                 showPersonDetails(selectedPerson);
+                entityManager.merge(selectedPerson);
+                personTable.refresh();
             }
 
         } else {
